@@ -1,0 +1,28 @@
+{
+  "telegram": {
+    "bot_token": "",
+    "chat_id": "",
+    "_help": "Get free bot from @BotFather on Telegram. Leave blank to disable."
+  },
+  "alert_cooldown_seconds": 5,
+  "distance": {
+    "alert_threshold_meters": 4.5,
+    "_help_threshold": "Alert fires only when person is closer than this distance (meters).",
+    "focal_length_px": 700,
+    "_help_focal": "Camera focal length in pixels. 700 is typical for 1080p webcam. Increase if distances read too low, decrease if too high.",
+    "known_person_height_m": 1.5,
+    "_help_height": "Assumed real-world height of a person in meters (used for distance estimation)."
+  },
+  "cameras": [
+    {
+      "id": "CAM-01",
+      "name": "Main Gate",
+      "source": 0,
+      "location": {
+        "lat": 28.6139,
+        "lon": 77.209,
+        "label": "Main Gate - Sector 1"
+      }
+    }
+  ]
+}
