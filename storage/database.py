@@ -44,7 +44,29 @@ class EventStore:
                 CREATE INDEX IF NOT EXISTS idx_events_created_at ON events(created_at);
                 CREATE INDEX IF NOT EXISTS idx_events_camera_id ON events(camera_id);
                 CREATE INDEX IF NOT EXISTS idx_events_status ON events(status);
+                
+                CREATE TABLE IF NOT EXISTS users (
+                    username TEXT PRIMARY KEY,
+                    password TEXT NOT NULL,
+                    role TEXT NOT NULL
+                );
+                
+                CREATE TABLE IF NOT EXISTS login_records (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT NOT NULL,
+                    login_time TEXT NOT NULL,
+                    role TEXT NOT NULL
+                );
                 """
+            )
+            # Insert default users if they don't exist
+            self._connection.execute(
+                "INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)",
+                ("admin", "admin", "admin")
+            )
+            self._connection.execute(
+                "INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)",
+                ("viewer", "viewer", "viewer")
             )
 
     def add_event(self, event: dict[str, Any]) -> str:
@@ -100,6 +122,28 @@ class EventStore:
     def clear_events(self) -> None:
         with self._lock, self._connection:
             self._connection.execute("DELETE FROM events")
+
+    def authenticate_user(self, username, password):
+        with self._lock:
+            row = self._connection.execute(
+                "SELECT role FROM users WHERE username = ? AND password = ?", (username, password)
+            ).fetchone()
+            return row["role"] if row else None
+
+    def log_login(self, username, role):
+        login_time = datetime.now(timezone.utc).isoformat()
+        with self._lock, self._connection:
+            self._connection.execute(
+                "INSERT INTO login_records (username, login_time, role) VALUES (?, ?, ?)",
+                (username, login_time, role)
+            )
+
+    def get_login_records(self, limit=100):
+        with self._lock:
+            rows = self._connection.execute(
+                "SELECT * FROM login_records ORDER BY login_time DESC LIMIT ?", (max(1, limit),)
+            ).fetchall()
+        return [dict(row) for row in rows]
 
     def close(self) -> None:
         with self._lock:

@@ -38,13 +38,15 @@ class Sidebar(ctk.CTkFrame):
         ("analytics",  "\u25b2  Analytics",                     COLORS["training"]),
         ("settings",   "\u2699  Settings",                      COLORS["config"]),
         ("system",     "\u25cf  System",                        COLORS["live"]),
+        ("records",    "\U0001F4D2  Login Records",             COLORS["whitelist"]),
     ]
 
-    def __init__(self, master, on_navigate):
-        super().__init__(master, width=SIDEBAR_WIDTH, fg_color="#0E1A2B",
-                  corner_radius=0, border_width=1, border_color="#233752")
+    def __init__(self, master, on_navigate, app=None):
+        super().__init__(master, width=SIDEBAR_WIDTH, fg_color=COLORS["bg_sidebar"],
+                  corner_radius=0, border_width=1, border_color=COLORS["border"])
         self.grid_propagate(False)
         self.on_navigate = on_navigate
+        self.app = app
         self.buttons = {}
 
         brand = ctk.CTkFrame(self, fg_color="transparent")
@@ -61,7 +63,7 @@ class Sidebar(ctk.CTkFrame):
         ctk.CTkLabel(brand, text="Border Surveillance — SIH26187", font=FONTS["small"],
                      text_color=COLORS["sidebar_muted"]).pack(anchor="w", pady=(2, 0))
 
-        ctk.CTkFrame(self, height=1, fg_color="#233752").pack(
+        ctk.CTkFrame(self, height=1, fg_color=COLORS["border"]).pack(
             fill="x", padx=PAD["md"], pady=(0, PAD["md"]))
 
         for key, label, accent in self.NAV_ITEMS:
@@ -77,13 +79,34 @@ class Sidebar(ctk.CTkFrame):
 
         footer = ctk.CTkFrame(self, fg_color="transparent")
         footer.pack(side="bottom", fill="x", padx=PAD["md"], pady=PAD["md"])
-        ctk.CTkFrame(self, height=1, fg_color="#233752").pack(
+        ctk.CTkFrame(self, height=1, fg_color=COLORS["border"]).pack(
             side="bottom", fill="x", padx=PAD["md"], pady=(0, PAD["sm"]))
+        
         self.status_dot = ctk.CTkLabel(footer, text="\u25CF", text_color=COLORS["success"],
                                         font=FONTS["small"])
         self.status_dot.pack(side="left")
-        ctk.CTkLabel(footer, text="System Ready", font=FONTS["small"],
-                     text_color=COLORS["sidebar_muted"]).pack(side="left", padx=(6, 0))
+        self.timer_label = ctk.CTkLabel(footer, text="00:00", font=FONTS["small"],
+                     text_color=COLORS["sidebar_muted"])
+        self.timer_label.pack(side="left", padx=(6, 0))
+        
+        self.theme_switch = ctk.CTkSwitch(footer, text="", width=30, height=16, switch_width=30, switch_height=15, command=self.toggle_theme)
+        self.theme_switch.pack(side="right")
+        self.theme_switch.select() # Light theme by default usually, but we check AppearanceMode later.
+        
+    def toggle_theme(self):
+        if self.theme_switch.get() == 1:
+            ctk.set_appearance_mode("dark")
+        else:
+            ctk.set_appearance_mode("light")
+
+    def update_visibility(self):
+        # hide records if not admin
+        if self.app and self.app.current_user and self.app.current_user.get("role") != "admin":
+            if "records" in self.buttons:
+                self.buttons["records"][0].pack_forget()
+        else:
+            if "records" in self.buttons:
+                self.buttons["records"][0].pack(fill="x", padx=PAD["sm"], pady=2)
 
     def _select(self, key):
         self.on_navigate(key)

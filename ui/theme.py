@@ -5,33 +5,32 @@ def apply_theme():
     ctk.set_default_color_theme("blue")
 
 COLORS = {
-    "bg_base":        "#F4F7FB",   # app background (soft white)
-    "bg_panel":       "#FFFFFF",   # cards / panels
-    "bg_panel_alt":   "#F1F4FA",   # nested panels / inputs
-    "bg_sidebar":     "#FFFFFF",   # sidebar background
-    "sidebar_alt":    "#17263B",   # active / hover sidebar surface
-    "sidebar_text":   "#F5F8FF",
-    "sidebar_muted":  "#9FB0C8",
-    "border":         "#E3E8F2",   # subtle borders / dividers
+    "bg_base":        ("#F4F7FB", "#0B1220"),
+    "bg_panel":       ("#FFFFFF", "#111A2C"),
+    "bg_panel_alt":   ("#F1F4FA", "#18243A"),
+    "bg_sidebar":     ("#FFFFFF", "#0B1220"),
+    "sidebar_alt":    ("#17263B", "#1E2F48"),
+    "sidebar_text":   ("#F5F8FF", "#F5F8FF"),
+    "sidebar_muted":  ("#9FB0C8", "#9FB0C8"),
+    "border":         ("#E3E8F2", "#233752"),
 
-    "text_primary":    "#0B1220",  # matches logo navy
-    "text_secondary":  "#5C6C8F",
-    "text_muted":      "#94A3C4",
+    "text_primary":    ("#0B1220", "#FFFFFF"),
+    "text_secondary":  ("#5C6C8F", "#A0B1CE"),
+    "text_muted":      ("#94A3C4", "#778AAB"),
 
-    "accent_blue":      "#2F6FE4",  # logo blue (triangle)
-    "accent_blue_hover":"#2558B8",
+    "accent_blue":      ("#2F6FE4", "#3D82FF"),
+    "accent_blue_hover":("#2558B8", "#2F6FE4"),
 
-    # module accents
-    "live":       "#1FAE74",   # green  — Live Camera Surveillance
-    "analyze":    "#128FB0",   # teal   — Analyze CCTV Video File
-    "whitelist":  "#E07B39",   # orange — Authorized Personnel (logo orange)
-    "evidence":   "#D6455B",   # rose   — Threat Evidence
-    "training":   "#2F6FE4",   # blue   — AI Training Graphs
-    "config":     "#7351C8",   # violet — Edit Config
+    "live":       ("#1FAE74", "#25D38B"),
+    "analyze":    ("#128FB0", "#18B8E0"),
+    "whitelist":  ("#E07B39", "#FFA25C"),
+    "evidence":   ("#D6455B", "#FF5973"),
+    "training":   ("#2F6FE4", "#3D82FF"),
+    "config":     ("#7351C8", "#9569FF"),
 
-    "success":   "#1FAE74",
-    "warning":   "#E0A72F",
-    "danger":    "#D6455B",
+    "success":   ("#1FAE74", "#25D38B"),
+    "warning":   ("#E0A72F", "#FFC342"),
+    "danger":    ("#D6455B", "#FF5973"),
 }
 
 FONT_FAMILY = "Segoe UI"
