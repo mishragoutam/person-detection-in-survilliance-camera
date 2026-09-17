@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0a0e1a"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="NETRA"/>
+  <meta name="description" content="SIH26187 Border Surveillance Mobile Command Center — real-time alerts, live feed, and recordings."/>
+  <title>NETRA — Border Surveillance</title>
+  <link rel="manifest" href="/manifest.json"/>
+  <link rel="icon" href="/logo.png"/>
+  <link rel="apple-touch-icon" href="/logo.png"/>
+  <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png"/>
+  <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"/>
+  <style>
+    /* ── Design tokens ─────────────────────────────────────────────────── */
+    :root {
+      --bg:          #0a0e1a;
+      --bg2:         #0f1424;
+      --surface:     #141929;
+      --surface2:    #1a2035;
+      --border:      rgba(255,255,255,0.07);
+      --border2:     rgba(255,255,255,0.12);
+      --text:        #e8eaf0;
+      --text2:       #8892aa;
+      --text3:       #525c78;
+      --accent:      #6366f1;
+      --accent2:     #818cf8;
+      --accent3:     #4f46e5;
+      --green:       #22c55e;
+      --red:         #ef4444;
+      --amber:       #f59e0b;
+      --cyan:        #06b6d4;
+      --glow:        rgba(99,102,241,0.15);
+      --red-glow:    rgba(239,68,68,0.15);
+      --green-glow:  rgba(34,197,94,0.15);
+      --radius:      14px;
+      --radius-sm:   8px;
+      --nav-h:       64px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* ── Reset ──────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      overflow-x: hidden;
+      padding-bottom: calc(var(--nav-h) + var(--safe-bottom));
+    }
+    img, video { max-width: 100%; display: block; }
+    button { font-family: inherit; cursor: pointer; border: none; outline: none; }
+    a { color: inherit; text-decoration: none; }
+    input { font-family: inherit; }
+
+    /* ── Scrollbar ──────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+    /* ── Layout ─────────────────────────────────────────────────────────── */
+    #app { display: flex; flex-direction: column; min-height: 100dvh; }
+
+    /* ── Top header ──────────────────────────────────────────────────────── */
+    .top-bar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,14,26,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px 12px;
+      padding-top: calc(12px + env(safe-area-inset-top, 0px));
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .top-bar-logo {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      overflow: hidden; flex-shrink: 0;
+      box-shadow: 0 0 12px rgba(99,102,241,0.4);
+    }
+    .logo-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .logo-text { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+    .logo-sub { font-size: 10px; color: var(--text2); font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+    .top-bar-right { display: flex; align-items: center; gap: 10px; }
+    .status-pill {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 10px; border-radius: 99px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
+      border: 1px solid;
+      transition: all 0.3s;
+    }
+    .status-pill.online  { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.08); color: var(--green); }
+    .status-pill.offline { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.08); color: var(--red); }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pulse 2s ease infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.85)} }
+
+    /* ── Bottom nav ──────────────────────────────────────────────────────── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+      background: rgba(10,14,26,0.92);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid var(--border);
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      padding-bottom: var(--safe-bottom);
+    }
+    .nav-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 4px; padding: 10px 4px;
+      background: none; color: var(--text3);
+      font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
+      transition: all 0.2s; position: relative;
+    }
+    .nav-btn .nav-icon { font-size: 20px; transition: transform 0.2s; }
+    .nav-btn.active { color: var(--accent2); }
+    .nav-btn.active .nav-icon { transform: translateY(-1px); }
+    .nav-btn.active::before {
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 32px; height: 2px; background: var(--accent); border-radius: 0 0 4px 4px;
+    }
+    .nav-badge {
+      position: absolute; top: 6px; right: calc(50% - 16px);
+      width: 17px; height: 17px; border-radius: 50%;
+      background: var(--red); color: white;
+      font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid var(--bg);
+    }
+
+    /* ── Pages ───────────────────────────────────────────────────────────── */
+    .page { display: none; flex-direction: column; flex: 1; animation: fadeIn 0.25s ease; }
+    .page.active { display: flex; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── Scroll container ────────────────────────────────────────────────── */
+    .scroll-container { flex: 1; overflow-y: auto; padding: 16px; }
+
+    /* ── Section heading ─────────────────────────────────────────────────── */
+    .section-heading {
+      font-size: 11px; font-weight: 700; color: var(--text3);
+      letter-spacing: 1px; text-transform: uppercase;
+      margin: 20px 0 10px; display: flex; align-items: center; gap: 8px;
+    }
+    .section-heading::after { content:''; flex:1; height:1px; background:var(--border); }
+
+    /* ── Cards ───────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .card:hover { border-color: var(--border2); }
+
+    /* ── Stat cards (dashboard) ──────────────────────────────────────────── */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: flex; flex-direction: column; gap: 6px;
+      transition: all 0.2s;
+    }
+    .stat-card:active { transform: scale(0.97); }
+    .stat-label { font-size: 10px; font-weight: 600; color: var(--text2); letter-spacing: 0.5px; text-transform: uppercase; }
+    .stat-value { font-size: 26px; font-weight: 800; letter-spacing: -1px; }
+    .stat-sub { font-size: 11px; color: var(--text3); }
+    .stat-card.red   { background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.04)); border-color: rgba(239,68,68,0.2); }
+    .stat-card.green { background: linear-gradient(135deg, rgba(34,197,94,0.10), rgba(34,197,94,0.03)); border-color: rgba(34,197,94,0.2); }
+    .stat-card.blue  { background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(99,102,241,0.04)); border-color: rgba(99,102,241,0.2); }
+    .stat-card.amber { background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.04)); border-color: rgba(245,158,11,0.2); }
+
+    /* ── Threat banner ───────────────────────────────────────────────────── */
+    .threat-banner {
+      background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(239,68,68,0.08));
+      border: 1px solid rgba(239,68,68,0.35);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 16px;
+      animation: threatPulse 2s ease infinite;
+    }
+    @keyframes threatPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.25); }
+      50%      { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+    }
+    .threat-icon { font-size: 28px; flex-shrink: 0; }
+    .threat-title { font-weight: 700; font-size: 14px; color: #fca5a5; }
+    .threat-body  { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+    /* ── Alert items ─────────────────────────────────────────────────────── */
+    .alerts-list { display: flex; flex-direction: column; gap: 10px; }
+    .alert-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .alert-item:active { transform: scale(0.985); }
+    .alert-item.critical { border-color: rgba(239,68,68,0.3); }
+    .alert-item.high     { border-color: rgba(245,158,11,0.25); }
+    .alert-item.dismissed { opacity: 0.45; }
+
+    .alert-thumb {
+      width: 100%; height: 140px; object-fit: cover;
+      background: var(--surface2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; color: var(--text3);
+    }
+    .alert-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .alert-thumb-placeholder { height: 72px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--text3); }
+    .alert-body { padding: 12px; }
+    .alert-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+    .alert-cam  { font-size: 11px; font-weight: 700; color: var(--accent2); }
+    .alert-time { font-size: 11px; color: var(--text3); margin-left: auto; }
+    .alert-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .alert-dist { font-size: 12px; color: var(--text2); }
+    .alert-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .severity-chip {
+      font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .severity-chip.CRITICAL { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+    .severity-chip.HIGH     { background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+    .severity-chip.MEDIUM   { background: rgba(99,102,241,0.2); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
+    .severity-chip.LOW      { background: rgba(34,197,94,0.1);  color: #86efac; border: 1px solid rgba(34,197,94,0.2); }
+
+    /* ── Buttons ─────────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 16px; border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 600;
+      transition: all 0.18s;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent3); }
+    .btn-secondary { background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
+    .btn-danger { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.25); }
+    .btn-green  { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.25); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-full { width: 100%; justify-content: center; }
+
+    /* ── Live feed ───────────────────────────────────────────────────────── */
+    .live-container {
+      background: #000; border-radius: var(--radius);
+      overflow: hidden; position: relative;
+      aspect-ratio: 16/9; width: 100%;
+      border: 1px solid var(--border);
+    }
+    .live-feed {
+      width: 100%; height: 100%; object-fit: contain;
+      background: #000;
+    }
+    .live-overlay {
+      position: absolute; top: 10px; left: 10px;
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+      padding: 4px 10px; border-radius: 99px;
+      font-size: 11px; font-weight: 700; color: var(--red);
+    }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); animation: pulse 1s ease infinite; }
+    .live-offline-msg {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px;
+      color: var(--text3); font-size: 13px; text-align: center;
+    }
+    .live-offline-msg .icon { font-size: 40px; }
+
+    /* ── Detail modal ─────────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(5,8,18,0.92);
+      backdrop-filter: blur(10px);
+      display: none; flex-direction: column;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-inner {
+      flex: 1; overflow-y: auto; padding: 16px;
+      padding-top: calc(16px + env(safe-area-inset-top,0px));
+      padding-bottom: calc(80px + env(safe-area-inset-bottom,0px));
+    }
+    .modal-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+    }
+    .modal-back {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--surface2); color: var(--text2);
+      border: 1px solid var(--border2);
+      font-size: 18px; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; cursor: pointer; transition: all 0.2s;
+    }
+    .modal-back:active { transform: scale(0.93); }
+    .modal-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+
+    /* ── Settings ────────────────────────────────────────────────────────── */
+    .settings-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+    .settings-label { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 8px; letter-spacing: 0.3px; }
+    .settings-input {
+      width: 100%; background: var(--bg2);
+      border: 1px solid var(--border2); border-radius: var(--radius-sm);
+      color: var(--text); padding: 10px 12px;
+      font-family: 'JetBrains Mono', monospace; font-size: 13px;
+      transition: border-color 0.2s; outline: none;
+    }
+    .settings-input:focus { border-color: var(--accent); }
+    .settings-desc { font-size: 11px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
+
+    /* ── Toast ───────────────────────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: calc(var(--nav-h) + 16px + var(--safe-bottom));
+      left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--surface2); border: 1px solid var(--border2);
+      color: var(--text); padding: 10px 18px; border-radius: 99px;
+      font-size: 13px; font-weight: 500; z-index: 9999;
+      opacity: 0; pointer-events: none;
+      transition: all 0.3s; white-space: nowrap; max-width: 90vw;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.success { border-color: rgba(34,197,94,0.4); color: var(--green); }
+    #toast.error   { border-color: rgba(239,68,68,0.4); color: #fca5a5; }
+
+    /* ── Pull to refresh indicator ──────────────────────────────────────── */
+    .refresh-indicator {
+      text-align: center; padding: 8px; font-size: 12px;
+      color: var(--text3); display: none;
+    }
+    .refresh-indicator.visible { display: block; }
+
+    /* ── Empty states ─────────────────────────────────────────────────────── */
+    .empty-state {
+      text-align: center; padding: 48px 24px;
+      color: var(--text3); font-size: 14px;
+    }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state .empty-title { font-weight: 700; color: var(--text2); margin-bottom: 6px; }
+
+    /* ── Spinner ──────────────────────────────────────────────────────────── */
+    .spinner {
+      width: 24px; height: 24px; border-radius: 50%;
+      border: 2px solid var(--border2); border-top-color: var(--accent);
+      animation: spin 0.7s linear infinite; margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Video player ─────────────────────────────────────────────────────── */
+    video.recording-player {
+      width: 100%; border-radius: var(--radius); background: #000;
+      border: 1px solid var(--border);
+    }
+
+    /* ── Connection error banner ─────────────────────────────────────────── */
+    .conn-error {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px; font-size: 12px; color: #fca5a5;
+      margin-bottom: 14px; display: none;
+    }
+    .conn-error.visible { display: block; }
+
+    /* ── Push setup banner ───────────────────────────────────────────────── */
+    .push-banner {
+      background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(99,102,241,0.05));
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: var(--radius);
+      padding: 14px; margin-bottom: 16px;
+      display: flex; align-items: flex-start; gap: 12px;
+    }
+    .push-banner .pbi { font-size: 24px; flex-shrink: 0; }
+    .push-banner-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+    .push-banner-desc  { font-size: 11px; color: var(--text2); margin-bottom: 8px; line-height: 1.5; }
+    .push-banner.hidden { display: none; }
+
+    /* ── GPS row ─────────────────────────────────────────────────────────── */
+    .gps-row {
+      display: flex; align-items: center; gap: 8px; padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px; color: var(--text2);
+    }
+    .gps-row .gps-icon { font-size: 18px; }
+    .gps-row a { color: var(--cyan); font-weight: 600; margin-left: auto; font-size: 12px; }
+
+    /* ── Dashboard quick-access live btn ─────────────────────────────────── */
+    .live-quick {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 14px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .live-quick:active { transform: scale(0.98); }
+    .live-quick-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--red), rgba(239,68,68,0.6));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    .live-quick-title { font-weight: 700; font-size: 15px; }
+    .live-quick-sub   { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .live-quick-arrow { margin-left: auto; color: var(--text3); font-size: 18px; }
+
+    /* ── Responsive ──────────────────────────────────────────────────────── */
+    @media (min-width: 480px) {
+      .stats-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Top bar ──────────────────────────────────────────────────────── -->
+  <header class="top-bar">
+    <div class="top-bar-logo">
+      <div class="logo-icon"><img src="/logo.png" alt="NETRA"/></div>
+      <div>
+        <div class="logo-text">NETRA</div>
+        <div class="logo-sub">Border Surveillance</div>
+      </div>
+    </div>
+    <div class="top-bar-right">
+      <div class="status-pill offline" id="connStatus">
+        <span class="status-dot"></span>
+        <span id="connText">Offline</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!--  PAGE: DASHBOARD                                                       -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="page active" id="page-dashboard">
+    <div class="scroll-container">
+
+      <!-- Push notification setup banner -->
+      <div class="push-banner" id="pushBanner">
+        <span class="pbi">🔔</span>
+        <div>
+          <div class="push-banner-title">Enable Mobile Alerts</div>
+          <div class="push-banner-desc">Get instant push notifications on your phone when a threat is detected — no Telegram needed.</div>
+          <button class="btn btn-primary btn-sm" id="enablePushBtn">Enable Notifications</button>
+        </div>
+      </div>
+
+      <!-- Connection error -->
+      <div class="conn-error" id="connError">
+        ⚠️ Cannot reach backend. Set your tunnel URL in <strong>Settings</strong>.
+      </div>
+
+      <!-- Last threat banner (shown when recent critical event) -->
+      <div class="threat-banner" id="threatBanner" style="display:none;">
+        <span class="threat-icon">⚠️</span>
+        <div>
+          <div class="threat-title" id="threatTitle">BORDER BREACH DETECTED</div>
+          <div class="threat-body" id="threatBody">Tap Alerts to view details.</div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card red">
+          <div class="stat-label">Alerts Today</div>
+          <div class="stat-value" id="statAlerts">—</div>
+          <div class="stat-sub">threat events</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Cameras</div>
+          <div class="stat-value" id="statCams">—</div>
+          <div class="stat-sub">active feeds</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">Subscribers</div>
+          <div class="stat-value" id="statSubs">—</div>
+          <div class="stat-sub">push devices</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-label">Last Alert</div>
+          <div class="stat-value" style="font-size:14px;padding-top:4px" id="statLast">—</div>
+          <div class="stat-sub" id="statLastSub">no events</div>
+        </div>
+      </div>
+
+      <!-- Live quick access -->
+      <div class="live-quick" id="dashLiveBtn">
+        <div class="live-quick-icon">📹</div>
+        <div>
+          <div class="live-quick-title">Live Border Feed</div>
+          <div class="live-quick-sub" id="dashLiveSub">Tap to open live camera view</div>
+        </div>
+        <span class="live-quick-arrow">›</span>
+      </div>
+
+      <!-- Recent alerts -->
+      <div class="section-heading">Recent Alerts</div>
+      <div class="alerts-list" id="dashAlertsList">
+        <div class="empty-state"><div class="spinner"></div></div>
+      </div>
+      <div style="text-align:center;margin-top:14px">
+        <button class="btn btn-secondary btn-sm" id="dashViewAllBtn">View All Alerts →</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!--  PAGE: LIVE                                                             -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="page" id="page-live">
+    <div class="scroll-container">
+      <div class="section-heading">Live Surveillance Feed</div>
+
+      <div class="live-container" id="liveContainer">
+        <img class="live-feed" id="liveFeed" alt="Live camera feed" style="display:none;"/>
+        <div class="live-overlay" id="liveOverlay" style="display:none;">
+          <span class="live-dot"></span> LIVE
+        </div>
+        <div class="live-offline-msg" id="liveOfflineMsg">
+          <span class="icon">📡</span>
+          <div>Backend not connected</div>
+          <div style="font-size:11px;margin-top:4px">Set tunnel URL in Settings</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-primary" style="flex:1" id="liveRefreshBtn">↻ Reconnect</button>
+        <button class="btn btn-secondary" id="liveSnapshotBtn">📸 Snapshot</button>
+      </div>
+
+      <div class="section-heading">Camera Info</div>
+      <div class="card" id="liveCamInfo">
+        <div style="color:var(--text3);font-size:13px">Connect backend to see camera details.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!--  PAGE: ALERTS                                                           -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="page" id="page-alerts">
+    <div class="scroll-container">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:800;letter-spacing:-0.3px;">Alert History</div>
+        <button class="btn btn-secondary btn-sm" id="refreshAlertsBtn">↻ Refresh</button>
+      </div>
+
+      <div class="alerts-list" id="alertsList">
+        <div class="empty-state"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!--  PAGE: SETTINGS                                                         -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="page" id="page-settings">
+    <div class="scroll-container">
+      <div style="font-size:18px;font-weight:800;letter-spacing:-0.3px;margin-bottom:16px;">Settings</div>
+
+      <div class="settings-item">
+        <div class="settings-label">🌐 Backend URL (Cloudflare Tunnel)</div>
+        <input class="settings-input" id="backendUrlInput" type="url" placeholder="https://xxxx.cfargotunnel.com"/>
+        <div class="settings-desc">Paste your Cloudflare tunnel URL here. The app will use this to connect to your detection engine.</div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-primary btn-sm" id="saveUrlBtn">Save & Connect</button>
+          <button class="btn btn-secondary btn-sm" id="testConnBtn">Test Connection</button>
+        </div>
+      </div>
+
+      <div class="settings-item">
+        <div class="settings-label">🔔 Push Notifications</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6;">
+          Subscribe to receive instant alerts on this device when a threat is detected.
+          <br/>Status: <span id="pushStatus" style="color:var(--text3)">Checking...</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-green btn-sm" id="subscribePushBtn">🔔 Subscribe</button>
+          <button class="btn btn-secondary btn-sm" id="unsubscribePushBtn">🔕 Unsubscribe</button>
+          <button class="btn btn-secondary btn-sm" id="testPushBtn">🧪 Test Alert</button>
+        </div>
+      </div>
+
+      <div class="settings-item">
+        <div class="settings-label">ℹ️ System Info</div>
+        <div style="font-size:13px;line-height:1.8;color:var(--text2)" id="sysInfoBlock">
+          Backend: <span id="infoBackend" style="color:var(--text3)">not connected</span><br/>
+          Cameras: <span id="infoCams" style="color:var(--text3)">—</span><br/>
+          Push subscribers: <span id="infoSubs" style="color:var(--text3)">—</span><br/>
+          Last synced: <span id="infoSync" style="color:var(--text3)">never</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:10px" id="refreshStatusBtn">↻ Refresh Status</button>
+      </div>
+
+      <div class="settings-item">
+        <div class="settings-label">🔗 Cloudflare Setup</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.7">
+          1. Install cloudflared on your PC<br/>
+          2. Run: <code style="background:var(--bg2);padding:1px 5px;border-radius:4px;font-family:monospace">cloudflared tunnel login</code><br/>
+          3. Create tunnel: <code style="background:var(--bg2);padding:1px 5px;border-radius:4px;font-family:monospace">cloudflared tunnel create netra</code><br/>
+          4. Route: <code style="background:var(--bg2);padding:1px 5px;border-radius:4px;font-family:monospace">cloudflared tunnel route dns netra netra.yourdomain.com</code><br/>
+          5. Run: <code style="background:var(--bg2);padding:1px 5px;border-radius:4px;font-family:monospace">cloudflared tunnel run netra</code><br/>
+          6. Start NETRA: <code style="background:var(--bg2);padding:1px 5px;border-radius:4px;font-family:monospace">python livedetector.py</code>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Bottom Navigation ─────────────────────────────────────────────── -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-page="dashboard" id="nav-dashboard">
+      <span class="nav-icon">🏠</span>
+      <span>Home</span>
+    </button>
+    <button class="nav-btn" data-page="live" id="nav-live">
+      <span class="nav-icon">📹</span>
+      <span>Live</span>
+    </button>
+    <button class="nav-btn" data-page="alerts" id="nav-alerts">
+      <span class="nav-badge" id="alertBadge" style="display:none">0</span>
+      <span class="nav-icon">🚨</span>
+      <span>Alerts</span>
+    </button>
+    <button class="nav-btn" data-page="settings" id="nav-settings">
+      <span class="nav-icon">⚙️</span>
+      <span>Settings</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- ══ ALERT DETAIL MODAL ════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="alertModal">
+  <div class="modal-inner">
+    <div class="modal-header">
+      <button class="modal-back" id="modalBack">‹</button>
+      <div class="modal-title">Alert Detail</div>
+    </div>
+    <div id="modalContent">Loading...</div>
+  </div>
+</div>
+
+<!-- ── Toast ──────────────────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+// NETRA Mobile App — JavaScript
+// ════════════════════════════════════════════════════════════════════════════
+
+// ── State ────────────────────────────────────────────────────────────────────
+const STATE = {
+  backendUrl: localStorage.getItem('netra_backend_url') || '',
+  vapidKey: null,
+  pushSub: null,
+  events: [],
+  status: null,
+  liveActive: false,
+  activePage: 'dashboard',
+  unreadAlerts: 0,
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const toast = (msg, type='', ms=2800) => {
+  const el = $('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.className = '', ms);
+};
+
+function relativeTime(iso) {
+  if (!iso) return '—';
+  const diff = (Date.now() - new Date(iso)) / 1000;
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return `${Math.floor(diff/86400)}d ago`;
+}
+
+function severityOf(ev) {
+  const s = (ev.severity || '').toUpperCase();
+  return ['CRITICAL','HIGH','MEDIUM','LOW'].includes(s) ? s : 'MEDIUM';
+}
+
+async function api(path, opts={}) {
+  if (!STATE.backendUrl) throw new Error('No backend URL configured');
+  const url = STATE.backendUrl.replace(/\/$/, '') + path;
+  const res = await fetch(url, { ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) } });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// ── Service worker registration ───────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    console.log('SW registered:', reg.scope);
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data?.type === 'NAVIGATE') navigateTo(e.data.url?.replace('/#', '') || 'dashboard');
+    });
+  }).catch(console.warn);
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function navigateTo(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const pg = $(`page-${page}`);
+  const nb = $(`nav-${page}`);
+  if (pg) { pg.classList.add('active'); STATE.activePage = page; }
+  if (nb) nb.classList.add('active');
+  if (page === 'live') startLiveFeed();
+  if (page === 'alerts') { loadAlerts(); STATE.unreadAlerts = 0; updateAlertBadge(); }
+  if (page === 'dashboard') loadDashboard();
+}
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => navigateTo(btn.dataset.page));
+});
+
+// ── Alert badge ───────────────────────────────────────────────────────────────
+function updateAlertBadge() {
+  const badge = $('alertBadge');
+  if (STATE.unreadAlerts > 0) {
+    badge.textContent = STATE.unreadAlerts > 9 ? '9+' : STATE.unreadAlerts;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// ── Connection status ─────────────────────────────────────────────────────────
+function setOnline(on) {
+  const pill = $('connStatus');
+  const txt  = $('connText');
+  pill.className = 'status-pill ' + (on ? 'online' : 'offline');
+  txt.textContent = on ? 'Online' : 'Offline';
+}
+
+// ── Backend URL settings ──────────────────────────────────────────────────────
+$('backendUrlInput').value = STATE.backendUrl;
+$('saveUrlBtn').addEventListener('click', () => {
+  const url = $('backendUrlInput').value.trim().replace(/\/$/, '');
+  if (!url) { toast('Enter a valid URL', 'error'); return; }
+  STATE.backendUrl = url;
+  localStorage.setItem('netra_backend_url', url);
+  toast('Saved! Connecting…');
+  refreshStatus();
+});
+
+$('testConnBtn').addEventListener('click', async () => {
+  try {
+    const s = await api('/api/status');
+    toast(`✅ Connected! ${s.camera_count} camera(s)`, 'success');
+    setOnline(true);
+  } catch (e) {
+    toast('❌ Connection failed: ' + e.message, 'error');
+    setOnline(false);
+  }
+});
+
+// ── Status refresh ────────────────────────────────────────────────────────────
+async function refreshStatus() {
+  if (!STATE.backendUrl) {
+    $('connError').classList.add('visible');
+    return;
+  }
+  try {
+    const s = await api('/api/status');
+    STATE.status = s;
+    setOnline(true);
+    $('connError').classList.remove('visible');
+    // Settings info
+    $('infoBackend').textContent = STATE.backendUrl;
+    $('infoCams').textContent = (s.active_cameras || []).join(', ') || '—';
+    $('infoSubs').textContent = s.subscribers ?? '—';
+    $('infoSync').textContent = new Date().toLocaleTimeString();
+    $('statCams').textContent = s.camera_count ?? '—';
+    $('statSubs').textContent = s.subscribers ?? '—';
+    // Live feed sub-text
+    if (s.active_cameras?.length) $('dashLiveSub').textContent = `${s.camera_count} camera(s) active`;
+    // VAPID key
+    try {
+      const kd = await api('/api/vapid-public-key');
+      if (kd.publicKey) STATE.vapidKey = kd.publicKey;
+    } catch {}
+  } catch {
+    setOnline(false);
+    $('connError').classList.add('visible');
+    $('infoBackend').textContent = 'offline';
+  }
+}
+$('refreshStatusBtn').addEventListener('click', refreshStatus);
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  await refreshStatus();
+  try {
+    const data = await api('/api/alerts?limit=20');
+    STATE.events = data.events || [];
+    // Stats
+    const today = new Date().toISOString().slice(0,10);
+    const todayAlerts = STATE.events.filter(e => (e.timestamp||'').startsWith(today)).length;
+    $('statAlerts').textContent = todayAlerts;
+    // Last alert
+    if (STATE.events.length > 0) {
+      const last = STATE.events[0];
+      $('statLast').textContent = relativeTime(last.timestamp);
+      $('statLastSub').textContent = last.camera_id || '—';
+      // Show threat banner if last alert was within 5 min
+      const minsAgo = (Date.now() - new Date(last.timestamp)) / 60000;
+      if (minsAgo < 5 && last.severity?.match(/CRITICAL|HIGH/i)) {
+        $('threatBanner').style.display = 'flex';
+        $('threatTitle').textContent = `${last.camera_id} — ${(last.labels||[]).join(', ') || 'Intruder'}`;
+        $('threatBody').textContent = `${relativeTime(last.timestamp)} · ${last.distance_m ? last.distance_m+'m' : ''} · ${last.location || ''}`;
+      } else {
+        $('threatBanner').style.display = 'none';
+      }
+    }
+    // Render 5 most recent
+    const container = $('dashAlertsList');
+    const recent = STATE.events.slice(0, 5);
+    if (!recent.length) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No alerts yet</div><div>The border is clear.</div></div>`;
+    } else {
+      container.innerHTML = recent.map(ev => renderAlertCard(ev)).join('');
+      addAlertCardListeners(container);
+    }
+  } catch (e) {
+    $('dashAlertsList').innerHTML = `<div class="empty-state"><div class="empty-icon">📡</div><div class="empty-title">Not connected</div><div>Configure backend URL in Settings.</div></div>`;
+  }
+}
+
+$('dashLiveBtn').addEventListener('click', () => navigateTo('live'));
+$('dashViewAllBtn').addEventListener('click', () => navigateTo('alerts'));
+
+// ── Alerts page ───────────────────────────────────────────────────────────────
+async function loadAlerts() {
+  const container = $('alertsList');
+  container.innerHTML = `<div class="empty-state"><div class="spinner"></div></div>`;
+  try {
+    const data = await api('/api/alerts?limit=100');
+    STATE.events = data.events || [];
+    if (!STATE.events.length) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No alerts yet</div><div>System is monitoring.</div></div>`;
+    } else {
+      container.innerHTML = STATE.events.map(ev => renderAlertCard(ev)).join('');
+      addAlertCardListeners(container);
+    }
+  } catch {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📡</div><div class="empty-title">Not connected</div><div>Configure backend URL in Settings.</div></div>`;
+  }
+}
+
+$('refreshAlertsBtn').addEventListener('click', loadAlerts);
+
+function renderAlertCard(ev) {
+  const sev = severityOf(ev);
+  const dist = ev.distance_m ? `${ev.distance_m}m` : '';
+  const labels = (ev.labels || []).join(', ') || 'Intruder';
+  const hasSnap = ev.has_snapshot;
+  const thumbHtml = hasSnap
+    ? `<div class="alert-thumb"><img src="${STATE.backendUrl}/api/snapshot/${ev.id}" loading="lazy" alt="snapshot" onerror="this.parentNode.innerHTML='📷'"/></div>`
+    : `<div class="alert-thumb-placeholder">📷</div>`;
+
+  return `<div class="alert-item ${sev.toLowerCase()}" data-id="${ev.id}">
+    ${thumbHtml}
+    <div class="alert-body">
+      <div class="alert-meta">
+        <span class="alert-cam">${ev.camera_id || 'CAM'}</span>
+        <span class="severity-chip ${sev}">${sev}</span>
+        <span class="alert-time">${relativeTime(ev.timestamp)}</span>
+      </div>
+      <div class="alert-title">${labels}${dist ? ' · ' + dist : ''}</div>
+      <div class="alert-dist">📍 ${ev.location || '—'}</div>
+    </div>
+  </div>`;
+}
+
+function addAlertCardListeners(container) {
+  container.querySelectorAll('.alert-item').forEach(el => {
+    el.addEventListener('click', () => openAlertDetail(el.dataset.id));
+  });
+}
+
+// ── Alert detail modal ────────────────────────────────────────────────────────
+function openAlertDetail(id) {
+  const ev = STATE.events.find(e => e.id === id);
+  if (!ev) return;
+  const modal = $('alertModal');
+  const sev = severityOf(ev);
+  const lat = ev.lat || 0; const lon = ev.lon || 0;
+  const mapsUrl = `https://maps.google.com/?q=${lat},${lon}`;
+  const hasRec = ev.has_recording;
+  const hasSnap = ev.has_snapshot;
+
+  $('modalContent').innerHTML = `
+    ${hasSnap ? `<img src="${STATE.backendUrl}/api/snapshot/${ev.id}" style="width:100%;border-radius:${getComputedStyle(document.documentElement).getPropertyValue('--radius')};margin-bottom:14px;border:1px solid rgba(255,255,255,0.08)" loading="lazy" alt="Alert snapshot"/>` : ''}
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <span class="severity-chip ${sev}">${sev}</span>
+      <span style="font-size:12px;color:var(--text3)">${ev.camera_id} · ${new Date(ev.timestamp).toLocaleString()}</span>
+    </div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:6px">${(ev.labels||[]).join(', ') || 'Intrusion Detected'}</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px">
+      Distance: <strong style="color:var(--text)">${ev.distance_m ? ev.distance_m + ' m' : '—'}</strong> &nbsp;|&nbsp;
+      Confidence: <strong style="color:var(--text)">${ev.confidence ? Math.round(ev.confidence*100)+'%' : '—'}</strong>
+    </div>
+    <div class="gps-row">
+      <span class="gps-icon">📍</span>
+      <span>${ev.location || '—'}</span>
+      ${lat ? `<a href="${mapsUrl}" target="_blank" rel="noopener">Open Maps →</a>` : ''}
+    </div>
+    ${hasRec ? `
+    <div class="section-heading">Threat Recording</div>
+    <video class="recording-player" controls playsinline preload="metadata"
+      src="${STATE.backendUrl}/api/recording/${ev.id}">
+      Your browser does not support video.
+    </video>` : ''}
+    <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
+      <button class="btn btn-danger btn-sm" onclick="dismissAlert('${ev.id}')">✓ Dismiss</button>
+      ${hasSnap ? `<a class="btn btn-secondary btn-sm" href="${STATE.backendUrl}/api/snapshot/${ev.id}" download>⬇ Download Snapshot</a>` : ''}
+    </div>`;
+
+  modal.classList.add('open');
+}
+
+async function dismissAlert(id) {
+  try {
+    await api(`/api/dismiss/${id}`, { method: 'POST' });
+    toast('Alert dismissed', 'success');
+    $('alertModal').classList.remove('open');
+    loadAlerts();
+  } catch { toast('Failed to dismiss', 'error'); }
+}
+
+$('modalBack').addEventListener('click', () => $('alertModal').classList.remove('open'));
+
+// ── Live feed ─────────────────────────────────────────────────────────────────
+let _liveRetryTimer = null;
+function startLiveFeed() {
+  clearTimeout(_liveRetryTimer);
+  if (!STATE.backendUrl) {
+    $('liveOfflineMsg').style.display = 'flex';
+    $('liveFeed').style.display = 'none';
+    $('liveOverlay').style.display = 'none';
+    return;
+  }
+  const feedUrl = STATE.backendUrl + '/video_feed';
+  const img = $('liveFeed');
+  img.onload = () => {
+    $('liveOfflineMsg').style.display = 'none';
+    img.style.display = 'block';
+    $('liveOverlay').style.display = 'flex';
+    STATE.liveActive = true;
+    // Update cam info
+    if (STATE.status?.active_cameras?.length) {
+      $('liveCamInfo').innerHTML = STATE.status.active_cameras.map(c =>
+        `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:20px">📹</span>
+          <div><div style="font-weight:600;font-size:13px">${c}</div><div style="font-size:11px;color:var(--text3)">Active · MJPEG stream</div></div>
+        </div>`
+      ).join('');
+    }
+  };
+  img.onerror = () => {
+    $('liveOfflineMsg').style.display = 'flex';
+    img.style.display = 'none';
+    $('liveOverlay').style.display = 'none';
+    STATE.liveActive = false;
+    _liveRetryTimer = setTimeout(() => { if (STATE.activePage === 'live') startLiveFeed(); }, 5000);
+  };
+  img.src = feedUrl + '?t=' + Date.now();
+}
+
+$('liveRefreshBtn').addEventListener('click', startLiveFeed);
+$('liveSnapshotBtn').addEventListener('click', async () => {
+  if (!STATE.backendUrl) { toast('Not connected', 'error'); return; }
+  try {
+    const snapUrl = STATE.backendUrl + '/api/snapshot/live';
+    window.open(snapUrl, '_blank');
+  } catch { toast('Snapshot unavailable', 'error'); }
+});
+
+// ── Web Push subscriptions ────────────────────────────────────────────────────
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return new Uint8Array([...raw].map(c => c.charCodeAt(0)));
+}
+
+async function checkPushStatus() {
+  const statusEl = $('pushStatus');
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+    statusEl.textContent = 'Not supported on this browser';
+    statusEl.style.color = 'var(--red)';
+    $('pushBanner').classList.add('hidden');
+    return;
+  }
+  const perm = Notification.permission;
+  const reg = await navigator.serviceWorker.ready;
+  STATE.pushSub = await reg.pushManager.getSubscription();
+  if (STATE.pushSub) {
+    statusEl.textContent = '✅ Subscribed on this device';
+    statusEl.style.color = 'var(--green)';
+    $('pushBanner').classList.add('hidden');
+  } else if (perm === 'denied') {
+    statusEl.textContent = '❌ Notifications blocked — enable in browser settings';
+    statusEl.style.color = 'var(--red)';
+    $('pushBanner').classList.add('hidden');
+  } else {
+    statusEl.textContent = 'Not subscribed';
+    statusEl.style.color = 'var(--text3)';
+    $('pushBanner').classList.remove('hidden');
+  }
+}
+
+async function subscribePush() {
+  if (!STATE.backendUrl) { toast('Set backend URL first', 'error'); return; }
+  if (!STATE.vapidKey) {
+    try { const kd = await api('/api/vapid-public-key'); STATE.vapidKey = kd.publicKey; } catch { toast('Cannot get VAPID key from backend', 'error'); return; }
+  }
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { toast('Notifications permission denied', 'error'); return; }
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(STATE.vapidKey),
+    });
+    STATE.pushSub = sub;
+    await api('/api/subscribe', { method: 'POST', body: JSON.stringify(sub.toJSON()) });
+    toast('✅ Push notifications enabled!', 'success');
+    checkPushStatus();
+    refreshStatus();
+  } catch (e) { toast('Subscribe failed: ' + e.message, 'error'); }
+}
+
+async function unsubscribePush() {
+  if (!STATE.pushSub) { toast('Not subscribed', ''); return; }
+  try {
+    await api('/api/subscribe', { method: 'DELETE', body: JSON.stringify({ endpoint: STATE.pushSub.endpoint }) });
+    await STATE.pushSub.unsubscribe();
+    STATE.pushSub = null;
+    toast('Unsubscribed from notifications');
+    checkPushStatus();
+  } catch (e) { toast('Unsubscribe failed: ' + e.message, 'error'); }
+}
+
+async function sendTestPush() {
+  if (!STATE.backendUrl) { toast('Set backend URL first', 'error'); return; }
+  try {
+    const res = await api('/api/test-alert', { method: 'POST' });
+    toast(`Test sent to ${res.sent_to} device(s)`, 'success');
+  } catch (e) { toast('Test failed: ' + e.message, 'error'); }
+}
+
+$('enablePushBtn').addEventListener('click', subscribePush);
+$('subscribePushBtn').addEventListener('click', subscribePush);
+$('unsubscribePushBtn').addEventListener('click', unsubscribePush);
+$('testPushBtn').addEventListener('click', sendTestPush);
+
+// ── Auto-refresh ──────────────────────────────────────────────────────────────
+setInterval(() => {
+  if (STATE.activePage === 'dashboard') loadDashboard();
+  if (STATE.activePage === 'alerts') loadAlerts();
+}, 30000);
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async function init() {
+  if (!STATE.backendUrl) {
+    $('connError').classList.add('visible');
+    $('dashAlertsList').innerHTML = `<div class="empty-state"><div class="empty-icon">⚙️</div><div class="empty-title">Setup Required</div><div>Go to <strong>Settings</strong> and enter your Cloudflare tunnel URL to connect.</div></div>`;
+  } else {
+    loadDashboard();
+  }
+  await checkPushStatus();
+  $('backendUrlInput').value = STATE.backendUrl;
+})();
+</script>
+</body>
+</html>

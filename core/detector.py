@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 from typing import List, Tuple
 from ultralytics import YOLO
+from .hybrid_analyzer import HybridAnalyzer
 
 logger = logging.getLogger("netra.detector")
 
@@ -9,34 +10,35 @@ class Detector:
     def __init__(self, confidence: float):
         self.confidence = confidence
         self.models = []
+        self.hybrid_analyzer = HybridAnalyzer()
         self._load_models()
 
     def _load_models(self):
         project_dir = Path(__file__).resolve().parent.parent
-        custom_weights = project_dir / "runs" / "detect" / "border_surveillance" / "sih26187_final" / "weights" / "best.pt"
-        if not custom_weights.exists():
-            custom_weights = project_dir / "yolov8n.pt"
-        coco_weights = project_dir / "yolov8n.pt"
+        checkpoint_paths = [
+            project_dir / "runs" / "detect" / "border_surveillance" / "sih26187_final" / "weights" / "best.pt",
+            project_dir / "hybrid_model_runs" / "yolov8n_person_det" / "weights" / "best.pt",
+            project_dir / "yolov8n.pt",
+        ]
+        loaded_paths = set()
 
-        if not custom_weights.exists():
-            logger.error("No YOLO checkpoint found at %s", custom_weights)
-            return
-            
-        logger.info("Loading custom checkpoint: %s", custom_weights)
-        try:
-            custom_model = YOLO(str(custom_weights))
-            self.models.append((custom_model, list(custom_model.names.keys()), 0))
-        except Exception:
-            logger.exception("Failed to load custom checkpoint: %s", custom_weights)
-            return
-
-        if coco_weights.exists() and coco_weights.resolve() != custom_weights.resolve():
-            logger.info("Loading COCO checkpoint: %s", coco_weights)
+        for source_priority, checkpoint_path in enumerate(checkpoint_paths):
+            if not checkpoint_path.exists() or checkpoint_path.resolve() in loaded_paths:
+                continue
             try:
-                coco_wanted_classes = [0, 2, 3, 5, 7]
-                self.models.append((YOLO(str(coco_weights)), coco_wanted_classes, 1))
+                logger.info("Loading YOLO checkpoint: %s", checkpoint_path)
+                model = YOLO(str(checkpoint_path))
+                if checkpoint_path.name == "yolov8n.pt":
+                    classes = [0, 2, 3, 5, 7]
+                else:
+                    classes = list(model.names.keys())
+                self.models.append((model, classes, source_priority))
+                loaded_paths.add(checkpoint_path.resolve())
             except Exception:
-                logger.exception("Failed to load COCO checkpoint: %s", coco_weights)
+                logger.exception("Failed to load YOLO checkpoint: %s", checkpoint_path)
+
+        if not self.models:
+            logger.error("No YOLO checkpoints found in %s", project_dir)
 
     def _box_iou(self, left: Tuple[int, int, int, int], right: Tuple[int, int, int, int]) -> float:
         lx1, ly1, lx2, ly2 = left
@@ -82,4 +84,6 @@ class Detector:
             ):
                 continue
             merged.append((cls_id, conf, name, x1, y1, x2, y2, bbox_h))
+            
+        merged = self.hybrid_analyzer.analyze_crops(frame, merged)
         return merged

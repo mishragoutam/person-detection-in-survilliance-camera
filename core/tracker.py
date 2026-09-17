@@ -6,12 +6,12 @@ KNOWN_HEIGHTS = {
     1: 1.7,  # Person
 }
 
-def estimate_distance(bbox_h_px: float, cls_id: int) -> float:
+def estimate_distance(bbox_h_px: float, cls_id: int, focal_scale: float = 1.0) -> float:
     """Return estimated distance in metres (1 decimal place)."""
     if bbox_h_px <= 0:
         return 99.9
     height_m = KNOWN_HEIGHTS.get(cls_id, config.person_height_m)
-    return round((height_m * config.focal_length_px) / bbox_h_px, 1)
+    return round((height_m * (config.focal_length_px * focal_scale)) / bbox_h_px, 1)
 
 def get_distance_color(dist_m: float) -> tuple[int, int, int]:
     """Return BGR colour for a proximity gauge: green → red."""
@@ -37,7 +37,12 @@ class DistanceTracker:
         # {track_id: {"cx": float, "cy": float, "buf": deque, "age": int}}
         self._tracks: dict[int, dict] = {}
 
-    def update(self, detections: list[tuple[int, int, int, int, float, int]]) -> list[tuple[int, float]]:
+    def reset(self):
+        """Clear all active tracks, forcing an immediate recalibration for the next frame."""
+        self._tracks = {}
+        self._next_id = 1
+
+    def update(self, detections: list[tuple[int, int, int, int, float, int]], focal_scale: float = 1.0) -> list[tuple[int, float]]:
         """Accept detections [(x1, y1, x2, y2, bbox_h, cls_id), ...] and
         return [(track_id, smoothed_dist_m), ...] in the same order."""
         used_tracks: set[int] = set()
@@ -76,7 +81,7 @@ class DistanceTracker:
             buf = sorted(track["buf"])
             smoothed_h = buf[len(buf) // 2]
             
-            smoothed_dist = estimate_distance(smoothed_h, cls_id)
+            smoothed_dist = estimate_distance(smoothed_h, cls_id, focal_scale)
             results.append((tid, smoothed_dist))
 
         stale = [tid for tid, t in self._tracks.items()

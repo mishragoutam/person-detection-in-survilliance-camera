@@ -4,5 +4,9 @@ opencv-python
 ultralytics
 requests
 Flask
+flask-cors
 psutil
 pytest
+pywebpush
+py-vapid
+cryptography

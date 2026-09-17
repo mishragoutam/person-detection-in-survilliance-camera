@@ -14,6 +14,7 @@ from storage.database import EventStore
 from services.evidence import EvidenceManager
 from services.alert_manager import AlertManager
 from core.detector import Detector
+from core.motion_detector import CameraMotionDetector
 
 logger = logging.getLogger("netra.camera_manager")
 
@@ -32,6 +33,8 @@ class CameraThread(threading.Thread):
         self.alert_manager = alert_manager
         self.threat_engine = ThreatEngine(config.alert_dist_m)
         self.dist_tracker = DistanceTracker()
+        self.motion_detector = CameraMotionDetector()
+        self.dynamic_focal_scale = 1.0
         
         self.fps = 0.0
         self._fc = 0
@@ -44,6 +47,8 @@ class CameraThread(threading.Thread):
         self.rec_start = 0.0
         self.threat_streak = 0
         self.last_threat_time = 0.0
+        self.last_recal_time = time.time()
+        self.show_recal_msg_until = 0.0
         
         self.stop_event = threading.Event()
         self._capture_lock = threading.Lock()
@@ -114,13 +119,33 @@ class CameraThread(threading.Thread):
             t_labels = []
             t_dists = []
             all_dists = []
+            
+            # Detect camera movement (PTZ)
+            has_moved, zoom_scale = self.motion_detector.detect_motion(frame)
+            
+            now_time = time.time()
+            if now_time - self.last_recal_time >= 20.0:
+                self.dist_tracker.reset()
+                self.last_recal_time = now_time
+                self.show_recal_msg_until = now_time + 2.0
+
+            if has_moved:
+                logger.debug("[%s] Camera pan/tilt detected. Recalibrating tracking buffers.", self.cam_id)
+                self.dist_tracker.reset()
+                self.show_recal_msg_until = now_time + 2.0
+                
+            if abs(zoom_scale - 1.0) > 0.01:
+                # Adjust focal scale dynamically
+                self.dynamic_focal_scale *= zoom_scale
+                # Clamp to prevent runaway scaling in case of errors
+                self.dynamic_focal_scale = max(0.2, min(5.0, self.dynamic_focal_scale))
 
             detections_for_tracker = [
                 (x1, y1, x2, y2, bbox_h, cls_id)
                 for cls_id, conf, name, x1, y1, x2, y2, bbox_h in box_data
             ]
 
-            smoothed_results = self.dist_tracker.update(detections_for_tracker)
+            smoothed_results = self.dist_tracker.update(detections_for_tracker, focal_scale=self.dynamic_focal_scale)
 
             for (tid, dist_m), (cls_id, conf, name, x1, y1, x2, y2, bbox_h) in zip(smoothed_results, box_data):
                 all_dists.append(dist_m)
@@ -246,6 +271,10 @@ class CameraThread(threading.Thread):
                 
             tw, _ = cv2.getTextSize(ts_str, cv2.FONT_HERSHEY_SIMPLEX, 0.52, 1)[0]
             cv2.putText(frame, ts_str, (W - tw - 10, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (0, 255, 255), 1)
+            
+            if time.time() < self.show_recal_msg_until:
+                rw, _ = cv2.getTextSize("RECALIBRATING DISTANCE...", cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)[0]
+                cv2.putText(frame, "RECALIBRATING DISTANCE...", ((W - rw) // 2, H - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
             
             if self.recording:
                 rl = f"● REC {int(time.time() - self.rec_start)}s"

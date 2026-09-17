@@ -6,7 +6,9 @@ Features:
   - User-configurable alert distance (config.json)
   - Authorized personnel whitelist (drop photos in authorized/)
   - Virtual border tripwire with color-coded proximity gauge
-  - Telegram mobile alerts with snapshot + GPS pin
+  - Web Push mobile alerts with snapshot (replaces Telegram)
+  - REST API for mobile app (alerts, events, recordings)
+  - Cloudflare Zero Trust tunnel compatible
   - Auto event recording on threat detection
 """
 
@@ -32,10 +34,27 @@ from core.camera_manager import CameraThread
 from storage.database import EventStore
 from services.evidence import EvidenceManager
 from services.alert_manager import AlertManager
-from services.stream_server import StreamServer
+from api_server import ApiServer, update_frame
+from services.push_service import get_public_vapid_key, generate_vapid_keys
 
-STREAM_HOST = os.getenv("NETRA_STREAM_HOST", "127.0.0.1")
-STREAM_PORT = int(os.getenv("NETRA_STREAM_PORT", "5001"))
+API_HOST = os.getenv("NETRA_API_HOST", "0.0.0.0")   # 0.0.0.0 so CF tunnel can reach it
+API_PORT = int(os.getenv("NETRA_API_PORT", "5001"))
+
+
+def _ensure_vapid_keys() -> None:
+    """Generate VAPID keys on first run if they don't exist."""
+    key = get_public_vapid_key()
+    if not key:
+        logger.info("Generating VAPID keys for Web Push (first run)...")
+        generate_vapid_keys()
+        key = get_public_vapid_key()
+        if key:
+            logger.info("VAPID keys ready. Public key: %s...", key[:20])
+        else:
+            logger.warning("VAPID key generation failed. Push notifications may not work.")
+    else:
+        logger.info("VAPID keys loaded. Public key: %s...", key[:20])
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="NETRA live border surveillance detector")
@@ -49,19 +68,18 @@ def main() -> None:
             logger.error("Camera ID %s was not found in config.json", args.camera_id)
             return
 
-    print("=" * 65)
+    _ensure_vapid_keys()
+
+    print("=" * 70)
     print("  SIH26187 — Intelligent Video Analytics for Border Surveillance")
     print(f"  Alert Distance : < {config.alert_dist_m} m  (edit config.json)")
     print(f"  Cameras        : {len(cameras)}")
-    tg_status = "ACTIVE" if config.telegram_token else "OFF (set bot_token in config.json)"
-    print(f"  Telegram       : {tg_status}")
-    print("=" * 65)
+    print(f"  API / Stream   : http://{API_HOST}:{API_PORT}")
+    print(f"  Live Feed      : http://localhost:{API_PORT}/video_feed")
+    print(f"  Alerts API     : http://localhost:{API_PORT}/api/alerts")
+    print(f"  Notifications  : Web Push (mobile app)")
+    print("=" * 70)
     print()
-    print("  📏 Distance Calibration:")
-    print(f"     Current focal_length_px = {config.focal_length_px}")
-    print("     Stand 3 m from camera → note bbox height H_px on screen")
-    print("     Then: focal_length_px = H_px × 3.0 / 1.7")
-    print("=" * 65)
 
     load_authorized_faces()
 
@@ -69,35 +87,64 @@ def main() -> None:
     event_store = EventStore(project_dir / "events.db")
     evidence_manager = EvidenceManager(project_dir / "evidence")
     alert_manager = AlertManager()
-    
+
     # Load Detector
     detector = Detector(config.detection_conf)
     if not detector.models:
         logger.error("No models loaded. Exiting.")
         return
 
-    threads = [CameraThread(cam, detector, event_store, evidence_manager, alert_manager) for cam in cameras]
+    threads = [
+        CameraThread(cam, detector, event_store, evidence_manager, alert_manager)
+        for cam in cameras
+    ]
+
+    # Patch each CameraThread to also push frames to the API server's frame store
+    _original_runs = {}
+    for t in threads:
+        cam_id = t.cam_id
+        original_run = t.run
+
+        def _patched_run(thread=t, cid=cam_id):
+            """Run the camera thread and stream frames to the API."""
+            import threading as _threading
+            stop = _threading.Event()
+
+            def _frame_pusher():
+                while not stop.is_set():
+                    import time
+                    with thread.lock:
+                        frame = thread.frame
+                    if frame is not None:
+                        update_frame(cid, frame)
+                    time.sleep(0.04)
+
+            pusher = _threading.Thread(target=_frame_pusher, daemon=True)
+            pusher.start()
+            try:
+                original_run()
+            finally:
+                stop.set()
+
+        t.run = _patched_run
+
     for t in threads:
         t.start()
 
-    print(f"\n[SYSTEM] Live Video Stream starting on http://{STREAM_HOST}:{STREAM_PORT}/video_feed ...\n")
+    # Start REST API + stream server
+    api_server = ApiServer(API_HOST, API_PORT, event_store)
+    api_server.start()
 
-    def get_frames_callback():
-        frames = []
-        for t in threads:
-            with t.lock:
-                f = t.frame
-            if f is not None:
-                import cv2
-                frames.append(cv2.resize(f, (640, 360)))
-        return frames
+    logger.info("NETRA running. Connect mobile app to this machine's API.")
+    logger.info("Tip: use 'cloudflared tunnel --url http://localhost:%s' to expose.", API_PORT)
 
-    server = StreamServer(STREAM_HOST, STREAM_PORT, get_frames_callback)
-    
     try:
-        server.start()
+        for t in threads:
+            t.join()
+    except KeyboardInterrupt:
+        logger.info("Shutdown requested (Ctrl+C)")
     finally:
-        server.stop()
+        api_server.stop()
         for thread in threads:
             thread.stop()
         for thread in threads:

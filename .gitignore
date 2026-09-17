@@ -1,9 +1,39 @@
+# Secrets / environment
 .env
 .env.*
+
+# Python virtual environments
 .venv/
+.venv312/
+
+# Python bytecode
 __pycache__/
 *.py[cod]
 .pytest_cache/
+
+# Local runtime data
 events.db
-runs/
 evidence/
+alerts/
+authorized/
+custom_videos/
+dataset/
+datasets/
+
+# Training runs — exclude everything EXCEPT the published custom model
+runs/
+!runs/detect/
+!runs/detect/border_surveillance/
+!runs/detect/border_surveillance/sih26187_final/
+!runs/detect/border_surveillance/sih26187_final/weights/
+!runs/detect/border_surveillance/sih26187_final/weights/best.pt
+
+# IDE / editor
+.vscode/
+
+# Kaggle credentials
+kaggle.json
+
+# OS artefacts
+Thumbs.db
+.DS_Store
