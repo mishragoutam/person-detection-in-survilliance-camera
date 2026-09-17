@@ -448,7 +448,7 @@
     </div>
   </header>
 
-  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- ═════════���════════════════════════════════════════════════════════════ -->
   <!--  PAGE: DASHBOARD                                                       -->
   <!-- ══════════════════════════════════════════════════════════════════════ -->
   <div class="page active" id="page-dashboard">
@@ -751,7 +751,7 @@ function updateAlertBadge() {
   }
 }
 
-// ── Connection status ─────────────────────────────────────────────────────────
+// ── Connection status ───────────���─────────────────────────────────────────────
 function setOnline(on) {
   const pill = $('connStatus');
   const txt  = $('connText');
@@ -1100,5 +1100,11 @@ setInterval(() => {
   $('backendUrlInput').value = STATE.backendUrl;
 })();
 </script>
+
+<!-- Vercel Web Analytics -->
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
