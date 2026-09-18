@@ -64,7 +64,11 @@ def create_api_app(event_store: EventStore) -> Flask:
 
     @app.route("/")
     def serve_index():
-        return app.send_static_file("index.html")
+        response = app.send_static_file("index.html")
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
         
     @app.route("/shutdown", methods=["POST"])
     def shutdown():
