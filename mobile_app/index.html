@@ -19,27 +19,27 @@
   <style>
     /* ── Design tokens ─────────────────────────────────────────────────── */
     :root {
-      --bg:          #0a0e1a;
-      --bg2:         #0f1424;
-      --surface:     #141929;
-      --surface2:    #1a2035;
-      --border:      rgba(255,255,255,0.07);
-      --border2:     rgba(255,255,255,0.12);
-      --text:        #e8eaf0;
-      --text2:       #8892aa;
-      --text3:       #525c78;
-      --accent:      #6366f1;
-      --accent2:     #818cf8;
-      --accent3:     #4f46e5;
-      --green:       #22c55e;
-      --red:         #ef4444;
-      --amber:       #f59e0b;
-      --cyan:        #06b6d4;
-      --glow:        rgba(99,102,241,0.15);
-      --red-glow:    rgba(239,68,68,0.15);
-      --green-glow:  rgba(34,197,94,0.15);
-      --radius:      14px;
-      --radius-sm:   8px;
+      --bg:          #F9F9F9;
+      --bg2:         #FFFFFF;
+      --surface:     #FFFFFF;
+      --surface2:    #F1F1F1;
+      --border:      #E5E5E5;
+      --border2:     #D4D4D4;
+      --text:        #0F0F0F;
+      --text2:       #606060;
+      --text3:       #909090;
+      --accent:      #FF0000;
+      --accent2:     #CC0000;
+      --accent3:     #990000;
+      --green:       #0F9D58;
+      --red:         #FF0000;
+      --amber:       #F4B400;
+      --cyan:        #4285F4;
+      --glow:        rgba(255,0,0,0.1);
+      --red-glow:    rgba(255,0,0,0.1);
+      --green-glow:  rgba(15,157,88,0.1);
+      --radius:      12px;
+      --radius-sm:   99px;
       --nav-h:       64px;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
@@ -71,7 +71,7 @@
     /* ── Top header ──────────────────────────────────────────────────────── */
     .top-bar {
       position: sticky; top: 0; z-index: 100;
-      background: rgba(10,14,26,0.85);
+      background: rgba(255,255,255,0.95);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
@@ -85,7 +85,7 @@
     .logo-icon {
       width: 36px; height: 36px; border-radius: 8px;
       overflow: hidden; flex-shrink: 0;
-      box-shadow: 0 0 12px rgba(99,102,241,0.4);
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
     }
     .logo-icon img { width: 100%; height: 100%; object-fit: cover; }
     .logo-text { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
@@ -106,7 +106,7 @@
     /* ── Bottom nav ──────────────────────────────────────────────────────── */
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-      background: rgba(10,14,26,0.92);
+      background: rgba(255,255,255,0.95);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
       border-top: 1px solid var(--border);
@@ -121,11 +121,11 @@
       transition: all 0.2s; position: relative;
     }
     .nav-btn .nav-icon { font-size: 20px; transition: transform 0.2s; }
-    .nav-btn.active { color: var(--accent2); }
-    .nav-btn.active .nav-icon { transform: translateY(-1px); }
+    .nav-btn.active { color: var(--text); }
+    .nav-btn.active .nav-icon { transform: translateY(-1px); color: var(--accent); }
     .nav-btn.active::before {
       content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-      width: 32px; height: 2px; background: var(--accent); border-radius: 0 0 4px 4px;
+      width: 32px; height: 3px; background: var(--accent); border-radius: 0 0 4px 4px;
     }
     .nav-badge {
       position: absolute; top: 6px; right: calc(50% - 16px);
@@ -158,9 +158,10 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
       transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .card:hover { border-color: var(--border2); }
+    .card:hover { border-color: var(--border2); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
 
     /* ── Stat cards (dashboard) ──────────────────────────────────────────── */
     .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
@@ -176,10 +177,10 @@
     .stat-label { font-size: 10px; font-weight: 600; color: var(--text2); letter-spacing: 0.5px; text-transform: uppercase; }
     .stat-value { font-size: 26px; font-weight: 800; letter-spacing: -1px; }
     .stat-sub { font-size: 11px; color: var(--text3); }
-    .stat-card.red   { background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.04)); border-color: rgba(239,68,68,0.2); }
-    .stat-card.green { background: linear-gradient(135deg, rgba(34,197,94,0.10), rgba(34,197,94,0.03)); border-color: rgba(34,197,94,0.2); }
-    .stat-card.blue  { background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(99,102,241,0.04)); border-color: rgba(99,102,241,0.2); }
-    .stat-card.amber { background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.04)); border-color: rgba(245,158,11,0.2); }
+    .stat-card.red   { background: #FFFFFF; border-color: var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
+    .stat-card.green { background: #FFFFFF; border-color: var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
+    .stat-card.blue  { background: #FFFFFF; border-color: var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
+    .stat-card.amber { background: #FFFFFF; border-color: var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
 
     /* ── Threat banner ───────────────────────────────────────────────────── */
     .threat-banner {
@@ -196,7 +197,7 @@
       50%      { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
     }
     .threat-icon { font-size: 28px; flex-shrink: 0; }
-    .threat-title { font-weight: 700; font-size: 14px; color: #fca5a5; }
+    .threat-title { font-weight: 700; font-size: 14px; color: var(--red); }
     .threat-body  { font-size: 12px; color: var(--text2); margin-top: 2px; }
 
     /* ── Alert items ─────────────────────────────────────────────────────── */
@@ -248,9 +249,9 @@
     .btn:active { transform: scale(0.96); }
     .btn-primary { background: var(--accent); color: white; }
     .btn-primary:hover { background: var(--accent3); }
-    .btn-secondary { background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
-    .btn-danger { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.25); }
-    .btn-green  { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.25); }
+    .btn-secondary { background: var(--surface2); color: var(--text); border: none; }
+    .btn-danger { background: rgba(255,0,0,0.1); color: var(--red); border: none; }
+    .btn-green  { background: rgba(15,157,88,0.1); color: var(--green); border: none; }
     .btn-sm { padding: 6px 12px; font-size: 12px; }
     .btn-full { width: 100%; justify-content: center; }
 
@@ -283,7 +284,7 @@
     /* ── Detail modal ─────────────────────────────────────────────────────── */
     .modal-overlay {
       position: fixed; inset: 0; z-index: 500;
-      background: rgba(5,8,18,0.92);
+      background: rgba(255,255,255,0.92);
       backdrop-filter: blur(10px);
       display: none; flex-direction: column;
       animation: fadeIn 0.2s ease;
@@ -299,8 +300,8 @@
     }
     .modal-back {
       width: 38px; height: 38px; border-radius: 50%;
-      background: var(--surface2); color: var(--text2);
-      border: 1px solid var(--border2);
+      background: var(--surface2); color: var(--text);
+      border: none;
       font-size: 18px; display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; cursor: pointer; transition: all 0.2s;
     }
@@ -330,16 +331,16 @@
     #toast {
       position: fixed; bottom: calc(var(--nav-h) + 16px + var(--safe-bottom));
       left: 50%; transform: translateX(-50%) translateY(20px);
-      background: var(--surface2); border: 1px solid var(--border2);
-      color: var(--text); padding: 10px 18px; border-radius: 99px;
+      background: #333333; border: none;
+      color: #FFFFFF; padding: 10px 18px; border-radius: 99px;
       font-size: 13px; font-weight: 500; z-index: 9999;
       opacity: 0; pointer-events: none;
       transition: all 0.3s; white-space: nowrap; max-width: 90vw;
       box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    #toast.success { border-color: rgba(34,197,94,0.4); color: var(--green); }
-    #toast.error   { border-color: rgba(239,68,68,0.4); color: #fca5a5; }
+    #toast.success { background: var(--green); color: #FFFFFF; }
+    #toast.error   { background: var(--red); color: #FFFFFF; }
 
     /* ── Pull to refresh indicator ──────────────────────────────────────── */
     .refresh-indicator {
@@ -375,7 +376,7 @@
       background: rgba(239,68,68,0.1);
       border: 1px solid rgba(239,68,68,0.25);
       border-radius: var(--radius-sm);
-      padding: 10px 14px; font-size: 12px; color: #fca5a5;
+      padding: 10px 14px; font-size: 12px; color: var(--red);
       margin-bottom: 14px; display: none;
     }
     .conn-error.visible { display: block; }
@@ -671,7 +672,7 @@
 
 // ── State ────────────────────────────────────────────────────────────────────
 const STATE = {
-  backendUrl: localStorage.getItem('netra_backend_url') || '',
+  backendUrl: localStorage.getItem('netra_backend_url') || window.location.origin,
   vapidKey: null,
   pushSub: null,
   events: [],

@@ -39,8 +39,6 @@ from ui.alerts import EvidencePage
 from ui.events import EventsPage
 from ui.settings import ConfigPage
 from ui.system import SystemPage
-from ui.login import LoginPage
-from ui.records import LoginRecordsPage
 from storage.database import EventStore
 
 # ======================================================================
@@ -56,8 +54,6 @@ PAGE_REGISTRY = {
     "analytics": AnalyticsPage,
     "settings": ConfigPage,
     "system": SystemPage,
-    "login": LoginPage,
-    "records": LoginRecordsPage,
 }
 
 class App(ctk.CTk):
@@ -78,12 +74,14 @@ class App(ctk.CTk):
         self.content.grid(row=0, column=1, sticky="nsew", padx=24, pady=20)
 
         self.event_store = EventStore(_PROJECT_DIR / "events.db")
-        self.current_user = None
-        self.login_time = None
+        self.current_user = {"role": "admin"}
+        
+        import time
+        self.login_time = time.time()
 
         self._pages = {}
         self._current_key = None
-        self.navigate("login")
+        self.navigate("dashboard")
         
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.update_timer()
@@ -103,10 +101,7 @@ class App(ctk.CTk):
         self.after(1000, self.update_timer)
 
     def on_login_success(self):
-        import time
-        self.login_time = time.time()
-        self.sidebar.update_visibility()
-        self.navigate("dashboard")
+        pass
 
     def on_closing(self):
         try:
@@ -127,12 +122,8 @@ class App(ctk.CTk):
         if key not in PAGE_REGISTRY:
             return
             
-        if key == "login":
-            self.sidebar.grid_forget()
-            self.content.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=0, pady=0)
-        else:
-            self.sidebar.grid(row=0, column=0, sticky="nsw")
-            self.content.grid(row=0, column=1, sticky="nsew", padx=24, pady=20)
+        self.sidebar.grid(row=0, column=0, sticky="nsw")
+        self.content.grid(row=0, column=1, sticky="nsew", padx=24, pady=20)
 
         if self._current_key is not None:
             self._pages[self._current_key].pack_forget()
@@ -143,12 +134,7 @@ class App(ctk.CTk):
 
         self._pages[key].pack(fill="both", expand=True)
         self._current_key = key
-        
-        if key != "login":
-            self.sidebar.set_active(key)
-        
-        if key == "records":
-            self._pages[key].refresh_records()
+        self.sidebar.set_active(key)
 
 
 if __name__ == "__main__":

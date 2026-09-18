@@ -1,12 +1,12 @@
 {
   "telegram": {
-    "bot_token": "",
-    "chat_id": "",
+    "bot_token": "6276906951",
+    "chat_id": "8214126151:AAEHqwWpD1ZpopJltEpVEb9LkncE8FS8HgY",
     "_help": "Get free bot from @BotFather on Telegram. Leave blank to disable."
   },
   "alert_cooldown_seconds": 5,
   "distance": {
-    "alert_threshold_meters": 18.5,
+    "alert_threshold_meters": 3.5,
     "_help_threshold": "Alert fires only when person is closer than this distance (meters).",
     "focal_length_px": 700,
     "_help_focal": "Camera focal length in pixels. 700 is typical for 1080p webcam. Increase if distances read too low, decrease if too high.",

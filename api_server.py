@@ -58,8 +58,19 @@ def update_frame(camera_id: str, frame: np.ndarray) -> None:
 
 
 def create_api_app(event_store: EventStore) -> Flask:
-    app = Flask(__name__)
+    # Serve mobile_app directory at root
+    app = Flask(__name__, static_folder=str(_PROJECT_DIR / "mobile_app"), static_url_path="")
     CORS(app, origins="*", supports_credentials=False)
+
+    @app.route("/")
+    def serve_index():
+        return app.send_static_file("index.html")
+        
+    @app.route("/shutdown", methods=["POST"])
+    def shutdown():
+        import os
+        os._exit(0)
+        return "OK"
 
     # ── Live stream ──────────────────────────────────────────────────────────
 

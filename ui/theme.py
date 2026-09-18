@@ -5,32 +5,32 @@ def apply_theme():
     ctk.set_default_color_theme("blue")
 
 COLORS = {
-    "bg_base":        ("#F4F7FB", "#0B1220"),
-    "bg_panel":       ("#FFFFFF", "#111A2C"),
-    "bg_panel_alt":   ("#F1F4FA", "#18243A"),
-    "bg_sidebar":     ("#FFFFFF", "#0B1220"),
-    "sidebar_alt":    ("#17263B", "#1E2F48"),
-    "sidebar_text":   ("#F5F8FF", "#F5F8FF"),
-    "sidebar_muted":  ("#9FB0C8", "#9FB0C8"),
-    "border":         ("#E3E8F2", "#233752"),
+    "bg_base":        ("#F0F2F5", "#F0F2F5"),
+    "bg_panel":       ("#FFFFFF", "#FFFFFF"),
+    "bg_panel_alt":   ("#F9F9F9", "#F9F9F9"),
+    "bg_sidebar":     ("#FFFFFF", "#FFFFFF"),
+    "sidebar_alt":    ("#F1F1F1", "#F1F1F1"),
+    "sidebar_text":   ("#111111", "#111111"),
+    "sidebar_muted":  ("#666666", "#666666"),
+    "border":         ("#E6E6E6", "#E6E6E6"),
 
-    "text_primary":    ("#0B1220", "#FFFFFF"),
-    "text_secondary":  ("#5C6C8F", "#A0B1CE"),
-    "text_muted":      ("#94A3C4", "#778AAB"),
+    "text_primary":    ("#111111", "#111111"),
+    "text_secondary":  ("#444444", "#444444"),
+    "text_muted":      ("#888888", "#888888"),
 
-    "accent_blue":      ("#2F6FE4", "#3D82FF"),
-    "accent_blue_hover":("#2558B8", "#2F6FE4"),
+    "accent_blue":      ("#FF4500", "#FF4500"),  # Changed to VLC orange / Pinterest red
+    "accent_blue_hover":("#E03E00", "#E03E00"),
 
-    "live":       ("#1FAE74", "#25D38B"),
-    "analyze":    ("#128FB0", "#18B8E0"),
-    "whitelist":  ("#E07B39", "#FFA25C"),
-    "evidence":   ("#D6455B", "#FF5973"),
-    "training":   ("#2F6FE4", "#3D82FF"),
-    "config":     ("#7351C8", "#9569FF"),
+    "live":       ("#E60023", "#E60023"),  # Pinterest red
+    "analyze":    ("#444444", "#444444"),
+    "whitelist":  ("#FF4500", "#FF4500"),
+    "evidence":   ("#111111", "#111111"),
+    "training":   ("#FF4500", "#FF4500"),
+    "config":     ("#666666", "#666666"),
 
-    "success":   ("#1FAE74", "#25D38B"),
-    "warning":   ("#E0A72F", "#FFC342"),
-    "danger":    ("#D6455B", "#FF5973"),
+    "success":   ("#1FAE74", "#1FAE74"),
+    "warning":   ("#E0A72F", "#E0A72F"),
+    "danger":    ("#E60023", "#E60023"),
 }
 
 FONT_FAMILY = "Segoe UI"
@@ -46,7 +46,7 @@ FONTS = {
     "mono":      ("Consolas", 12),
 }
 
-PAD = {"xs": 4, "sm": 8, "md": 16, "lg": 24, "xl": 32}
-RADIUS = {"sm": 6, "md": 10, "lg": 16}
+PAD = {"xs": 8, "sm": 12, "md": 24, "lg": 32, "xl": 48}
+RADIUS = {"sm": 24, "md": 16, "lg": 24}
 
 SIDEBAR_WIDTH = 240

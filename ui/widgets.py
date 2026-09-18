@@ -38,12 +38,11 @@ class Sidebar(ctk.CTkFrame):
         ("analytics",  "\u25b2  Analytics",                     COLORS["training"]),
         ("settings",   "\u2699  Settings",                      COLORS["config"]),
         ("system",     "\u25cf  System",                        COLORS["live"]),
-        ("records",    "\U0001F4D2  Login Records",             COLORS["whitelist"]),
     ]
 
     def __init__(self, master, on_navigate, app=None):
         super().__init__(master, width=SIDEBAR_WIDTH, fg_color=COLORS["bg_sidebar"],
-                  corner_radius=0, border_width=1, border_color=COLORS["border"])
+                  corner_radius=0, border_width=0, border_color=COLORS["border"])
         self.grid_propagate(False)
         self.on_navigate = on_navigate
         self.app = app
@@ -100,13 +99,7 @@ class Sidebar(ctk.CTkFrame):
             ctk.set_appearance_mode("light")
 
     def update_visibility(self):
-        # hide records if not admin
-        if self.app and self.app.current_user and self.app.current_user.get("role") != "admin":
-            if "records" in self.buttons:
-                self.buttons["records"][0].pack_forget()
-        else:
-            if "records" in self.buttons:
-                self.buttons["records"][0].pack(fill="x", padx=PAD["sm"], pady=2)
+        pass
 
     def _select(self, key):
         self.on_navigate(key)
@@ -148,7 +141,7 @@ class Card(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, fg_color=COLORS["bg_panel"],
                           corner_radius=RADIUS["md"],
-                          border_width=1, border_color=COLORS["border"], **kwargs)
+                          border_width=0, border_color=COLORS["border"], **kwargs)
 
 
 class StatTile(Card):
@@ -193,7 +186,7 @@ def SecondaryButton(master, text, command=None, **kwargs):
     return ctk.CTkButton(
         master, text=text, command=command, height=38, corner_radius=RADIUS["sm"],
         fg_color="transparent", hover_color=COLORS["bg_panel_alt"],
-        text_color=COLORS["text_primary"], border_width=1, border_color=COLORS["border"],
+        text_color=COLORS["text_primary"], border_width=0, border_color=COLORS["border"],
         font=FONTS["body"], **kwargs,
     )
 
@@ -201,7 +194,7 @@ def ThirdButton(master, text, command=None, **kwargs):
     return ctk.CTkButton(
         master, text=text, command=command, height=38, corner_radius=RADIUS["sm"],
         fg_color="transparent", hover_color=COLORS["bg_panel_alt"],
-        text_color=COLORS["text_secondary"], border_width=1, border_color=COLORS["border"],
+        text_color=COLORS["text_secondary"], border_width=0, border_color=COLORS["border"],
         font=FONTS["body"], **kwargs,
     )
 
